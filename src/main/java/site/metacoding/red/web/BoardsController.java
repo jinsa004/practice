@@ -53,6 +53,7 @@ public class BoardsController {
 
 	@GetMapping("/boards/{id}")
 	public String getBoardDetail(@PathVariable Integer id, Model model) {
+		model.addAttribute("boards", boardsDao.findById(id));
 		return "boards/detail";
 	}
 
