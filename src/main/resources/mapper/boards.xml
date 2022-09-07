@@ -13,8 +13,8 @@
 		decode(currentPage, totalPage-1, 1, 0) last,
 		currentBlock,
 		blockCount,
-		(currentBlock*5)-4 startPageNum,
-		(currentBlock*5) lastPageNum
+		startPageNum,
+		lastPageNum
 		FROM
 		(
 		SELECT count(*) totalCount, ceil(count(*)/3) totalPage, #{page} currentPage, 0
@@ -33,7 +33,7 @@
 
 	<select id="findById"
 		resultType="site.metacoding.red.domain.boards.Boards">
-		SELECT title, content
+		SELECT title, content, id, usersId, createdAt
 		FROM boards
 		WHERE id=#{id}
 	</select>
@@ -55,7 +55,7 @@
 	</update>
 
 	<delete id="delete">
-
+		DELETE FROM boards WHERE id = #{id}
 	</delete>
 
 </mapper>

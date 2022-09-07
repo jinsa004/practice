@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import lombok.RequiredArgsConstructor;
+import site.metacoding.red.domain.boards.Boards;
 import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
+import site.metacoding.red.web.dto.request.users.LoginDto;
 import site.metacoding.red.web.dto.response.boards.MainDto;
 import site.metacoding.red.web.dto.response.boards.PagingDto;
 
@@ -26,6 +28,28 @@ public class BoardsController {
 	// @PostMapping("/boards/{id}/delete")
 	// @PostMapping("/boards/{id}/update")
 
+	@PostMapping("/boards/{id}/delete")
+	public String deleteBoards(@PathVariable Integer id) {
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal"); 
+		
+		if(boardsPS == null) { // if는 비정상 로직을 타게 해서 걸러내는 필터 역할을 하는 게 좋다.
+			return "redirect:/boards/"+id;
+		}
+		// 인증 체크 로그인이 됐느냐?
+		if(principal==null) {
+			return "redirect:/loginForm";
+		}
+		// 권한 체크 ( principal.getId() = boardsPS의 userId를 비교)
+		if(principal.getId() != boardsPS.getUsersId()) {
+			return "redirect:/boards/"+id;
+		}
+		
+		
+		boardsDao.delete(id);
+		return "redirect:/";
+	}
+	
 	@PostMapping("/boards")
 	public String writeBoards(WriteDto writeDto) {
 		// 1번 세션에 접근해서 세션 값을 확인한다. 그 때 Users로 다운캐스팅하고 키 값은 principal로 한다.
