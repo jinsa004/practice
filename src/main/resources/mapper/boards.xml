@@ -4,6 +4,26 @@
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="site.metacoding.red.domain.boards.BoardsDao">
 
+	<select id="paging"
+		resultType="site.metacoding.red.web.dto.response.boards.PagingDto">
+		SELECT totalCount,
+		totalPage,
+		currentPage,
+		decode(currentPage, 0, 1, 0) first,
+		decode(currentPage, totalPage-1, 1, 0) last,
+		currentBlock,
+		blockCount,
+		(currentBlock*5)-4 startPageNum,
+		(currentBlock*5) lastPageNum
+		FROM
+		(
+		SELECT count(*) totalCount, ceil(count(*)/3) totalPage, #{page} currentPage, 0
+		first, 0 last, 0 currentBlock, 5 blockCount, 0 startPageNum, 0
+		lastPageNum
+		FROM boards
+		)
+	</select>
+
 	<insert id="insert">
 		INSERT INTO boards(id, title, content, usersId,
 		createdAt)
@@ -22,10 +42,12 @@
 		resultType="site.metacoding.red.web.dto.response.boards.MainDto">
 		SELECT b.id, b.title, u.username
 		FROM boards b
-		INNER JOIN users u
+		INNER JOIN
+		users u
 		ON b.usersId = u.id
 		ORDER BY b.id DESC
-		OFFSET #{startNum} ROWS FETCH NEXT 10 ROWS ONLY
+		OFFSET #{startNum} ROWS
+		FETCH NEXT 3 ROWS ONLY
 	</select>
 
 	<update id="update">
