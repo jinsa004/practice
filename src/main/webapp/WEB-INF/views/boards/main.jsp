@@ -22,7 +22,7 @@
 		</tbody>
 	</table>
 
-
+<div class="d-flex justify-content-center">
 	<ul class="pagination">
 		<li class='page-item ${paging.first ? "disabled":"" }'><a class="page-link" href="?page=${paging.currentPage-1}">Previous</a></li>
 		<c:forEach var="pageNum" begin="${paging.startPageNum }" end="${paging.lastPageNum}">
@@ -30,8 +30,9 @@
 		</c:forEach>
 		<li class='page-item ${paging.last ? "disabled":"" }'><a class="page-link" href="?page=${paging.currentPage+1}">Next</a></li>
 	</ul>
+	</div>
 
-	<div style="background-color: 'grey';">
+<%-- <div style="background-color: 'grey';">
 		<h3>currentBlock : ${paging.currentBlock }</h3>
 		<h3>blockCount : 5</h3>
 		<h3>startPageNum : ${paging.startPageNum }</h3>
@@ -41,7 +42,7 @@
 		<h3>currentPage : ${paging.currentPage}</h3>
 		<h3>isLast : ${paging.last}</h3>
 		<h3>isFirst : ${paging.first}</h3>
-	</div>
+	</div> --%>
 </div>
 
 <%@ include file="../layout/footer.jsp"%>
