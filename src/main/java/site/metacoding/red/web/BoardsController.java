@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import site.metacoding.red.domain.boards.Boards;
 import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
+import site.metacoding.red.web.dto.request.boards.UpdateDto;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
 import site.metacoding.red.web.dto.request.users.LoginDto;
 import site.metacoding.red.web.dto.response.boards.MainDto;
@@ -28,28 +29,76 @@ public class BoardsController {
 	// @PostMapping("/boards/{id}/delete")
 	// @PostMapping("/boards/{id}/update")
 
-	@PostMapping("/boards/{id}/delete")
-	public String deleteBoards(@PathVariable Integer id) {
+	@PostMapping("/boards/{id}/update")
+	public String update(@PathVariable Integer id, UpdateDto updateDto) {
+		//1영속화
 		Boards boardsPS = boardsDao.findById(id);
-		Users principal = (Users) session.getAttribute("principal"); 
-		
-		if(boardsPS == null) { // if는 비정상 로직을 타게 해서 걸러내는 필터 역할을 하는 게 좋다.
-			return "redirect:/boards/"+id;
+		Users principal = (Users) session.getAttribute("principal");
+		// if는 비정상 로직을 타게 해서 걸러내는 필터 역할을 하는 게 좋다.
+		if (boardsPS == null) {
+			return "errors/badPage";
 		}
 		// 인증 체크 로그인이 됐느냐?
-		if(principal==null) {
+		if (principal == null) {
 			return "redirect:/loginForm";
 		}
 		// 권한 체크 ( principal.getId() = boardsPS의 userId를 비교)
-		if(principal.getId() != boardsPS.getUsersId()) {
-			return "redirect:/boards/"+id;
+		if (principal.getId() != boardsPS.getUsersId()) {
+			return "errors/badPage";
 		}
-		
-		
-		boardsDao.delete(id);
+		//2변경
+		boardsPS.글수정(updateDto);
+		//3수행
+		boardsDao.update(boardsPS);
+
+		return "redirect:/boards/" + id;
+	}
+
+	@GetMapping("/boards/{id}/updateForm")
+	public String updateForm(@PathVariable Integer id, Model model) {
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal");
+
+		// if는 비정상 로직을 타게 해서 걸러내는 필터 역할을 하는 게 좋다.
+		if (boardsPS == null) {
+			return "errors/badPage";
+		}
+		// 인증 체크 로그인이 됐느냐?
+		if (principal == null) {
+			return "redirect:/loginForm";
+		}
+		// 권한 체크 ( principal.getId() = boardsPS의 userId를 비교)
+		if (principal.getId() != boardsPS.getUsersId()) {
+			return "errors/badPage";
+		}
+
+		model.addAttribute("boards", boardsPS);
+		boardsDao.update(boardsPS);
+		return "boards/updateForm";
+	}
+
+	@PostMapping("/boards/{id}/delete")
+	public String deleteBoards(@PathVariable Integer id) {
+		Boards boardsPS = boardsDao.findById(id);
+		Users principal = (Users) session.getAttribute("principal");
+
+		// if는 비정상 로직을 타게 해서 걸러내는 필터 역할을 하는 게 좋다.
+		if (boardsPS == null) {
+			return "errors/badPage";
+		}
+		// 인증 체크 로그인이 됐느냐?
+		if (principal == null) {
+			return "redirect:/loginForm";
+		}
+		// 권한 체크 ( principal.getId() = boardsPS의 userId를 비교)
+		if (principal.getId() != boardsPS.getUsersId()) {
+			return "redirect:/boards/" + id;
+		}
+
+		boardsDao.delete(id); // 핵심 로직
 		return "redirect:/";
 	}
-	
+
 	@PostMapping("/boards")
 	public String writeBoards(WriteDto writeDto) {
 		// 1번 세션에 접근해서 세션 값을 확인한다. 그 때 Users로 다운캐스팅하고 키 값은 principal로 한다.
@@ -73,26 +122,27 @@ public class BoardsController {
 	// http://localhost:8000/?page=0
 	@GetMapping({ "/", "/boards" })
 	public String getBoardList(Model model, Integer page) {// 0->0, 1->10, 2->20 한번에 뜨는 게시물개수를 10개로 정했기때문.
-		if (page == null) page = 0;
+		if (page == null)
+			page = 0;
 		int startNum = page * 3;
 		List<MainDto> boardsList = boardsDao.findAll(startNum);
-		PagingDto paging = boardsDao.paging(page); 
-		
+		PagingDto paging = boardsDao.paging(page);
+
 		final int blockCount = 5;
-		
+
 		int currentBlock = page / blockCount;
-		int startPageNum =  (currentBlock*blockCount) + 1;
-		int lastPageNum =  startPageNum + (blockCount -1);
-		
-		if(paging.getTotalPage()< lastPageNum) {
+		int startPageNum = (currentBlock * blockCount) + 1;
+		int lastPageNum = startPageNum + (blockCount - 1);
+
+		if (paging.getTotalPage() < lastPageNum) {
 			lastPageNum = paging.getTotalPage();
 		}
-		
+
 		paging.setBlockCount(blockCount);
 		paging.setCurrentBlock(currentBlock);
 		paging.setStartPageNum(startPageNum);
 		paging.setLastPageNum(lastPageNum);
-		
+
 		model.addAttribute("boardsList", boardsList);
 		model.addAttribute("paging", paging);
 		return "boards/main";
