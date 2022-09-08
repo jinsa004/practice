@@ -4,6 +4,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,7 +17,6 @@ import site.metacoding.red.domain.boards.BoardsDao;
 import site.metacoding.red.domain.users.Users;
 import site.metacoding.red.web.dto.request.boards.UpdateDto;
 import site.metacoding.red.web.dto.request.boards.WriteDto;
-import site.metacoding.red.web.dto.request.users.LoginDto;
 import site.metacoding.red.web.dto.response.boards.MainDto;
 import site.metacoding.red.web.dto.response.boards.PagingDto;
 
@@ -120,31 +120,31 @@ public class BoardsController {
 
 	// http://localhost:8000/ => null 값이 받아지는데 null 값일때도 첫 페이지가 나올 수 있게 해야함.
 	// http://localhost:8000/?page=0
+	
+	//1번째 ?page=0&keyword=스프링
 	@GetMapping({ "/", "/boards" })
-	public String getBoardList(Model model, Integer page) {// 0->0, 1->10, 2->20 한번에 뜨는 게시물개수를 10개로 정했기때문.
-		if (page == null)
+	public String getBoardList(Model model, Integer page, String keyword) {// 0->0, 1->10, 2->20 한번에 뜨는 게시물개수를 10개로 정했기때문.
+		if (page == null) {
 			page = 0;
-		int startNum = page * 3;
-		List<MainDto> boardsList = boardsDao.findAll(startNum);
-		PagingDto paging = boardsDao.paging(page);
-
-		final int blockCount = 5;
-
-		int currentBlock = page / blockCount;
-		int startPageNum = (currentBlock * blockCount) + 1;
-		int lastPageNum = startPageNum + (blockCount - 1);
-
-		if (paging.getTotalPage() < lastPageNum) {
-			lastPageNum = paging.getTotalPage();
 		}
-
-		paging.setBlockCount(blockCount);
-		paging.setCurrentBlock(currentBlock);
-		paging.setStartPageNum(startPageNum);
-		paging.setLastPageNum(lastPageNum);
-
-		model.addAttribute("boardsList", boardsList);
-		model.addAttribute("paging", paging);
+		int startNum = page * 3;
+		
+		if(keyword == null || keyword.isEmpty()) {
+			List<MainDto> boardsList = boardsDao.findAll(startNum);
+			keyword = "0";
+			PagingDto paging = boardsDao.paging(page, null);
+			paging.makeBlockInfo();
+			
+			model.addAttribute("boardsList", boardsList);
+			model.addAttribute("paging", paging);
+			
+		}else {
+			List<MainDto> boardsList = boardsDao.findSearch(startNum, keyword);
+			PagingDto paging = boardsDao.paging(page, keyword);
+			
+			model.addAttribute("boardsList", boardsList);
+			model.addAttribute("paging", paging);
+		}
 		return "boards/main";
 	}
 
